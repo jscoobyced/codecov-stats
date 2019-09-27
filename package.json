@@ -1,6 +1,6 @@
 {
   "name": "codecov-stats",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Easily retrieve codecov statistics.",
   "main": "index.js",
   "repository": "https://github.com/jscoobyced/codecov-stats.git",
