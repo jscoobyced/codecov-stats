@@ -43,7 +43,8 @@ const getCodecovPullRequests = async (config) => {
   console.log('Fetching page', page);
   let data = {};
   try {
-    const url = `https://${config.codecov.domain}/api/ghe/${config.owner}/${config.repo}/pulls?state=closed&sort=pullid&order=desc`;
+    const gh = config.codecov.isEnterprise ? 'ghe' : 'gh';
+    const url = `https://${config.codecov.domain}/api/${gh}/${config.owner}/${config.repo}/pulls?state=closed&sort=pullid&order=desc`;
     const options = {
       authorization: config.codecov.authorization,
       token: config.codecov.token,
