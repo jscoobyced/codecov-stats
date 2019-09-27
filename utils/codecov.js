@@ -1,6 +1,6 @@
 const http = require('./http');
 
-let _config = {
+const _config = {
   from: new Date(),
   owner: '',
   repo: '',
@@ -10,41 +10,38 @@ let _config = {
     authorization: false,
     token: false
   },
-  github: {
-    domain: '',
-    isEnterprise: true,
-    authorization: false,
-    token: false
-  },
   debug: false
 };
 
 let pullRequests;
-let lastPullRequest;
 let page = 0;
 let authorStats;
+let repoStats;
 
 const start = async (config) => {
   pullRequests = [];
   lastPullRequest = false;
   const options = { ..._config, ...config };
   if (config.debug) {
-    console.log(config);
+    console.log('Fetching PRs...');
   }
   await getCodecovPullRequests(options);
   return {
     authorStats,
+    repoStats,
     pullRequests
   };
 }
 
 const getCodecovPullRequests = async (config) => {
   page++;
-  console.log('Fetching page', page);
+  if (config.debug) {
+    console.log('Fetching page', page);
+  }
   let data = {};
   try {
     const gh = config.codecov.isEnterprise ? 'ghe' : 'gh';
-    const url = `https://${config.codecov.domain}/api/${gh}/${config.owner}/${config.repo}/pulls?state=closed&sort=pullid&order=desc`;
+    const url = `https://${config.codecov.domain}/api/${gh}/${config.owner}/${config.repo}/pulls?state=merged&sort=pullid&order=desc`;
     const options = {
       authorization: config.codecov.authorization,
       token: config.codecov.token,
@@ -61,13 +58,12 @@ const getCodecovPullRequests = async (config) => {
     console.log('codecov.js', 'try:', data.error);
   } else {
     await processCoverage(data, config);
+    computeStatsPerAuthor();
+    computeStatsPerRepository(config);
   }
 }
 
 const processCoverage = async (response, config) => {
-  if (config.debug) {
-    console.log(response);
-  }
   if (!response) {
     console.log('No more data.');
     return;
@@ -75,27 +71,31 @@ const processCoverage = async (response, config) => {
 
   const pulls = response.pulls;
   if (!Array.isArray(pulls) || pulls.length === 0) {
-    console.log('Fetched all relevant PRs. Getting stats...');
+    if (config.debug) {
+      console.log('Fetched all relevant PRs.');
+    }
     return;
+  }
+
+  if (config.debug) {
+    console.log('PR found:', pulls.length);
   }
 
   pulls.forEach(pr => {
     const date = new Date(pr.updatestamp);
-    if (date.getTime() < config.from.getTime()) {
-      lastPullRequest = true;
-      return;
+    if (config.debug) {
+      console.log('PR date:', date);
     }
-    const author = pr.head.author ? pr.head.author.username : pr.author ? pr.author.username : 'unknown';
-    const pullRequestNumber = pr.issueid;
-    const diff = pr.head.totals.c - pr.base.totals.c;
-    pullRequests.push({ author, pullRequestNumber, diff });
+
+    if (pr.head && date.getTime() >= config.from.getTime()) {
+      const author = pr.head && pr.head.author ? pr.head.author.username : pr.author ? pr.author.username : 'unknown';
+      const pullRequestNumber = pr.issueid;
+      const diff = pr.head.totals.c - pr.base.totals.c;
+      pullRequests.push({ author, pullRequestNumber, diff });
+    }
   });
 
-  if (!lastPullRequest) {
-    await getCodecovPullRequests(config);
-  } else {
-    computeStatsPerAuthor();
-  }
+  await getCodecovPullRequests(config);
 }
 
 const computeStatsPerAuthor = () => {
@@ -107,6 +107,18 @@ const computeStatsPerAuthor = () => {
       authorStats[pr.author] = pr.diff;
     }
   });
+}
+
+const computeStatsPerRepository = (config) => {
+  let diff = 0;
+  pullRequests.forEach(pr => {
+    diff += pr.diff;
+  });
+  repoStats = {
+    owner: config.owner,
+    repo: config.repo,
+    diff
+  };
 }
 
 module.exports = {

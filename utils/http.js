@@ -1,6 +1,6 @@
 const fetch = require("node-fetch");
 
-const config = {
+const _config = {
   accept: 'application/json, text/plain, */*',
   method: 'GET',
   authorization: false,
@@ -11,17 +11,17 @@ const config = {
 };
 
 const openAndRequest = async (url, options, jsonData = false) => {
-  const newconfig = { ...config, ...options };
-  const _url = url + (newconfig.withPage ?
-    (url.indexOf('?') > 0 ? '&' : '?') + 'page=' + newconfig.page : '');
-  if (newconfig.debug) {
+  const config = { ..._config, ...options };
+  const _url = url + (config.withPage ?
+    (url.indexOf('?') > 0 ? '&' : '?') + 'page=' + config.page : '');
+  if (config.debug) {
     console.log('URL:', _url);
   }
   const headers = buildHeaders(jsonData, options);
   let data = {};
   try {
     const response = await fetch(_url, {
-      method: newconfig.method,
+      method: config.method,
       body: jsonData ? jsonData : null,
       headers
     });
