@@ -1,6 +1,6 @@
 {
   "name": "codecov-stats",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Easily retrieve codecov statistics.",
   "main": "index.js",
   "repository": "https://github.com/jscoobyced/codecov-stats.git",
@@ -8,5 +8,12 @@
   "license": "MIT",
   "dependencies": {
     "node-fetch": "^2.6.0"
-  }
+  },
+  "files": [
+    "utils/*.js"
+  ],
+  "keywords": [
+    "codecov",
+    "coverage"
+  ]
 }
