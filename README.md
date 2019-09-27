@@ -13,7 +13,7 @@ The `from` date is used to limit the PRs that contribute to the statistics. Only
 Sample code:
 
 ```
-const codecov = require('./index');
+const codecov = require('codecov-stats');
 
 const options = {
   from: new Date('2019-07-01 00:00:00'),
